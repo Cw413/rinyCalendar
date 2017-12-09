@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+	<script type="text/javascript" src="riny.calendar.js"></script>
+	<title>demo</title>
+	<style>
+	body,div{
+		margin:0;
+		padding:0;
+	}
+	i{
+		font-style:normal;
+	}
+	.calendar{
+		font-size:0;
+		word-break:break-all;
+	}
+	.calendar i{
+		display:inline-block;
+		text-align:center;
+		width:14%;
+		font-size:14px;
+		line-height:50px;
+	}
+	.year_and_month span{
+		display:inline-block;
+		width:50%;
+		text-align:center;
+	}
+	.year_and_month i{
+		display:inline;
+	}
+	.rinyCalendar_today{
+		display:block;
+		background-color:cornflowerblue;
+		color:#fff;
+	}
+	.btns{
+		font-size:0;
+	}
+	.btn{
+		display:inline-block;
+		width:50%;
+		font-size:14px;
+		text-align:center;
+		line-height:50px;
+		height:50px;
+	}
+	.rinyCalendar_oldday{
+		color:#ccc;
+	}
+	</style>
+</head>
+<body>
+	<div class="calendar">
+		<div class="year_and_month">
+			<span class="year_and_month_wrap">
+				<i class="calendar_year"></i>
+				<i>年</i>
+			</span>
+			<span class="year_and_month_wrap">
+				<i class="calendar_month"></i>
+				<i>月</i>
+			</span>
+		</div>
+		<div class="calendar_week"></div>
+		<div class="calendar_days"></div>
+	</div>
+	<div class="btns">
+		<div class="prev btn">上个月</div>
+		<div class="next btn">下个月</div>
+	</div>
+	<script>
+	function getEl(cla){
+		return document.getElementsByClassName(cla)[0];
+	};
+
+	var yearInner=getEl('calendar_year'),monthInner=getEl('calendar_month'),weeksInner=getEl('calendar_week'),daysInner=getEl('calendar_days'),prevMonthBtn=getEl('prev'),nextMonthBtn=getEl('next');
+
+	new rinyCalendar({
+		yearInner:yearInner,
+		monthInner:monthInner,
+		weeksInner:weeksInner,
+		weeksTemplate:'<i>weeksTemplate</i>',
+		daysInner:daysInner,
+		daysTemplate:'<i class="dd">daysTemplate</i>',
+		prevMonthBtn:prevMonthBtn,
+		nextMonthBtn:nextMonthBtn,
+		prevFn:ac,
+		nextFn:ac
+	});
+
+	var dd=document.getElementsByClassName('dd');
+	var we=document.getElementsByClassName('rinyCalendar_week');
+	function ac(){
+		for(var i=0;i<dd.length;i++){
+			if(i%7==6 || i%7==5){
+				dd[i].style.color='red';
+				if(i<=6){
+					we[i].style.color='red';
+				};
+				
+			};
+		};
+	};
+	ac();
+	</script>
+</body>
+</html>
