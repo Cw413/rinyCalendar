@@ -1,151 +1,270 @@
+;(function(obj){
 
-var rinyGetChild=function(el,cla){
-	this.node=el.childNodes;
-	this.newArr=[];
+	//日历类
+	var rinyCalendar=function(options){
 
-	this.nodeFor=function(arr){
-		for(var i=0;i<arr.length;i++){
-			if(arr[i].nodeType==1 && arr[i].className.split(' ').indexOf(cla)!=-1){
-				this.newArr.push(arr[i]);
-			};
-			if(arr[i].childNodes){
-				this.nodeFor(arr[i].childNodes);
-			}else{
-				return;
-			};
-		};
-	};
+		var _this=this;
+		this.options=options;
+		this.date=new Date();
+		this.today=this.date.getDate();
+		this.toweek= this.date.getDay()==0? 7 : this.date.getDay();
+		this.tomonth=this.date.getMonth();
+		this.toyear=this.date.getFullYear();
+		this.m= this.options.m || this.options.m==0 ? this.options.m : this.tomonth;
+		this.html='';
 
-	this.nodeFor(this.node);
+		//根据类型初始化日历
+		if(this.options.type=='horizontal'){
+			this.horizontalInit();
 
-	return this.newArr;
-};
-
-var rinyCalendar=function(option){
-	this.date=new Date();
-	this.today=this.date.getDate();
-	this.toweek= this.date.getDay()==0? 7 : this.date.getDay();
-	this.tomonth=this.date.getMonth();
-	this.toyear=this.date.getFullYear();
-	this.m= option.m || option.m==0 ? option.m : this.tomonth;
-
-	if(!option.weeksTemplate || option.weeksTemplate.indexOf('weeksTemplate')==-1){
-		console.error('you need weeksTemplate');
-		return;
-	};
-
-	var defWeek=['周一','周二','周三','周四','周五','周六','周日'];
-	if(option.weeksText){
-		defWeek=option.weeksText;
-	};
-	this.weekHtml='';
-	for(var l=0;l<defWeek.length;l++){
-		this.weekHtml+=option.weeksTemplate.replace('weeksTemplate','<span class="rinyCalendar_week" rinyweek="'+defWeek[l]+'">'+defWeek[l]+'</span>');
-	};
-
-	option.weeksInner.innerHTML=this.weekHtml;
-
-	this.dayInner=function(curyear,curmonth,lastDay,firstDayWeek){
-
-		option.yearInner.textContent=curyear;
-		option.yearInner.setAttribute('rinyyear',curyear);
-		option.monthInner.textContent=curmonth;
-		option.monthInner.setAttribute('rinymonth',curmonth);
-
-		if(!option.daysTemplate || option.daysTemplate.indexOf('daysTemplate')==-1){
-			console.error('you need daysTemplate');
-			return;
+		}else if(this.options.type=='vertical'){
+			this.verticalInit();
 		};
 
-		var html='';
-		for(var i=0;i<firstDayWeek-1;i++){
-			var blank=option.daysTemplate.replace('daysTemplate','<span class="rinyCalendar_blank"></span>');
-			html+=blank;
-		};
-		for(var j=0;j<lastDay;j++){
-			var day=option.daysTemplate.replace('daysTemplate','<span class="rinyCalendar_day" rinyday='+(j+1)+'>'+(j+1)+'</span>');
-			html+=day;
-		};
-
-		var beInnerNum=firstDayWeek-1+lastDay;
-		var line=Math.ceil(beInnerNum/7);
-		var afterBlankNum=line*7-beInnerNum;
-
-		for(var k=0;k<afterBlankNum;k++){
-			var afterBlank=option.daysTemplate.replace('daysTemplate','<span class="rinyCalendar_blank"></span>');
-			html+=afterBlank;
-		};
-
-		option.daysInner.innerHTML=html;
+		this.chooseDate();
 
 	};
 
-	this.setCalendar=function(year,month){
+	//设置日历
+	rinyCalendar.prototype.setCalendar=function(){
 
-		var curYear=year;
-		var curMonth=month+1;
-
-		var nextMonth=month+1;
-		this.date.setDate(1);
-		var firstDayWeek= this.date.getDay()==0? 7 : this.date.getDay();
-		//这里需要注意，如果本月有31号而下个月没有，直接设置成下个月会变成下个月的31号，但由于下个月没有31号，所以会再到下一个月，就结果而言，会跳转到下下个月。
-		//所以在这里可以先将日期设置成本月的首日，获取了星期之后再调整到下个月，毕竟每个月都有1号。
-		this.date.setMonth(nextMonth);
-		this.date.setDate(0);
-		var lastDay=this.date.getDate();
-
-		this.dayInner(curYear,curMonth,lastDay,firstDayWeek);
-
-	};
-
-	this.set=function(){
-		//设置月份前都先把日期设到首日
+		//把日期设置成本月的1号
 		this.date.setDate(1);
 		this.date.setMonth(this.m);
-		this.setCalendar(this.date.getFullYear(),this.date.getMonth());
-		
-		var days=new rinyGetChild(option.daysInner,'rinyCalendar_day');
-		for(var i=0;i<days.length;i++){
-			var text=days[i].textContent;
-			if(this.toyear==option.yearInner.textContent && this.tomonth+1==option.monthInner.textContent && this.today==text){
-				days[i].className=days[i].className+' rinyCalendar_today';
+
+		this.curYear=this.date.getFullYear();
+		this.curMonth=this.date.getMonth()+1;
+		this.firstDayWeek= this.date.getDay()==0? 7 : this.date.getDay();
+
+		//这里需要注意，如果本月有31号而下个月没有，而且今天正好是31号，此时，如果直接设置成下个月理论上会变成下个月的31号，但由于下个月没有31号，所以会继续往后跳一个月，就结果而言，会跳转到下下个月。
+		//为了解决这个问题，一开始就把日期设置成了本月的1号，毕竟每个月都有1号。而且，我们也正需要把日期设置成1号以获取本月1号是星期几。
+		this.date.setMonth(this.curMonth);
+		this.date.setDate(0);
+		this.lastDay=this.date.getDate();
+
+		//获取上个月的最后一天
+		var ren=(this.curYear % 400 == 0 || (this.curYear % 100 != 0 && this.curYear % 4 == 0)) ? 29 : 28,
+			arr=[31,ren,31,30,31,30,31,31,30,31,30,31];
+		this.prevMonthLastDay=arr[this.curMonth-2];	//this.curMonth为实际显示的月份，要从0开始的话，需要减2。
+		if(!this.prevMonthLastDay){
+			this.prevMonthLastDay=31;
+		};
+
+	};
+
+	//生成年节点
+	rinyCalendar.prototype.createYearNode=function(){
+
+		this.yearNode=document.createElement('span');
+		this.yearNode.textContent=this.curYear+'年';
+		this.yearNode.className='riny_calendar_year';
+
+	};
+
+	//生成月节点
+	rinyCalendar.prototype.createMonthNode=function(){
+
+		this.monthNode=document.createElement('span');
+		this.monthNode.textContent=this.curMonth+'月';
+		this.monthNode.className='riny_calendar_month';
+
+	};
+
+	//生成周节点
+	rinyCalendar.prototype.createWeekNode=function(){
+
+		var defWeek=['周日','周一','周二','周三','周四','周五','周六'];
+		if(this.options.weeksText){
+			defWeek=this.options.weeksText;
+		};
+
+		this.weekHtml='';
+		var weekendClass;
+		for(var l=0;l<defWeek.length;l++){
+			
+			weekendClass='';
+			if(l%7==6 || l%7==0){
+				weekendClass='riny_calendar_weekend';
 			};
-			if(option.yearInner.textContent<this.toyear || option.yearInner.textContent==this.toyear && option.monthInner.textContent<this.tomonth+1 || option.yearInner.textContent==this.toyear && option.monthInner.textContent==this.tomonth+1 && text<this.today){
-				days[i].className=days[i].className+' rinyCalendar_oldday';
-			};			
-		};
-	};
-	this.set();
 
-	this.prevMon=function(){
-		this.m--;
-		if(this.m==-2){
-			this.m=10;
+			this.weekHtml+='<span class="'+weekendClass+'">'+defWeek[l]+'</span>';
 		};
-		this.set();
+
+		this.weekNode=document.createElement('div');
+		this.weekNode.className='riny_calendar_week';
+		this.weekNode.innerHTML=this.weekHtml;
+
 	};
 
-	this.nextMon=function(){
-		this.m++;
-		if(this.m==13){
-			this.m=1;
+	//生成日节点
+	rinyCalendar.prototype.createDayNode=function(){
+		
+		this.html='';
+		var day,weekendClass;
+
+		for(var i=0;i<42;i++){
+
+			weekendClass='';
+
+			if(i%7==6 || i%7==0){
+				weekendClass='riny_calendar_weekend';
+			};
+
+			if(i<this.firstDayWeek){
+
+				this.html+='<span class="riny_calendar_blank '+weekendClass+'">'+(this.prevMonthLastDay-this.firstDayWeek+1+i)+'</span>';
+
+			}else if(i>=this.firstDayWeek && i<this.lastDay+this.firstDayWeek){
+
+				day='<span class="riny_calendar_day '+weekendClass+'" rinycalendardate='+this.curYear+'-'+this.curMonth+'-'+(i-this.firstDayWeek+1)+'>'+(i-this.firstDayWeek+1)+'</span>';
+			
+				if(this.toyear==this.curYear && this.tomonth+1==this.curMonth && this.today==i-this.firstDayWeek+1){
+					
+					day='<span class="riny_calendar_day riny_calendar_today '+weekendClass+'" rinycalendardate='+this.curYear+'-'+this.curMonth+'-'+(i-this.firstDayWeek+1)+'>'+(i-this.firstDayWeek+1)+'</span>';
+				
+				}else if(this.curYear<this.toyear || this.curYear==this.toyear && this.curMonth<this.tomonth+1 || this.curYear==this.toyear && this.curMonth==this.tomonth+1 && i-this.firstDayWeek+1<this.today){
+					
+					day='<span class="riny_calendar_day riny_calendar_oldday '+weekendClass+'" rinycalendardate='+this.curYear+'-'+this.curMonth+'-'+(i-this.firstDayWeek+1)+'>'+(i-this.firstDayWeek+1)+'</span>';
+				};
+
+				this.html+=day;
+
+			}else{
+
+				this.html+='<span class="riny_calendar_blank '+ weekendClass+'">'+(i-this.firstDayWeek-this.lastDay+1)+'</span>';
+
+			};
 		};
-		this.set();
+
+		this.daysNode=document.createElement('div');
+		this.daysNode.className='riny_calendar_days';
+		this.daysNode.innerHTML=this.html;
+
 	};
 
-	var _this=this;
+	//初始化水平日历
+	rinyCalendar.prototype.horizontalInit=function(){
 
-	if(option.prevMonthBtn){
-		option.prevMonthBtn.addEventListener('click',function(){
-			_this.prevMon();
-			option.prevFn && option.prevFn();
+		var fragment=document.createDocumentFragment();
+
+		this.setCalendar();
+		this.createWeekNode();
+		this.createYearNode();
+		this.createMonthNode();
+		this.createDayNode();
+
+		fragment.appendChild(this.yearNode);
+		fragment.appendChild(this.monthNode);
+		fragment.appendChild(this.weekNode);
+		this.options.YMWWrap.appendChild(fragment);
+		this.options.daysWrap.appendChild(this.daysNode);
+
+		this.turnBtn();
+
+	};
+
+	//初始化垂直日历
+	rinyCalendar.prototype.verticalInit=function(){
+
+		var fragment,
+			wholeFragment=document.createDocumentFragment();
+
+		for(var i=0;i<this.options.num;i++){
+
+			fragment=document.createDocumentFragment();
+			this.setCalendar();
+			this.createWeekNode();
+			this.createYearNode();
+			this.createMonthNode();
+			this.createDayNode();
+
+			fragment.appendChild(this.yearNode);
+			fragment.appendChild(this.monthNode);
+			fragment.appendChild(this.weekNode);
+			fragment.appendChild(this.daysNode);
+			wholeFragment.appendChild(fragment);
+
+			this.m++;
+
+		};
+
+		this.options.wrap.appendChild(wholeFragment);
+
+	};
+
+	//过滤m值(m值为用作设置月份的值)
+	rinyCalendar.prototype.mFilter=function(){
+
+		if(this.m>11){
+			this.m=this.m%12;
+		}else if(this.m<0){
+			this.m=this.m%12+12;
+		};
+
+	};
+
+	//翻页
+	rinyCalendar.prototype.pageTurn=function(){
+
+		this.setCalendar();
+		this.yearNode.textContent=this.curYear+'年';
+		this.monthNode.textContent=this.curMonth+'月';
+		this.createDayNode();
+		this.options.daysWrap.appendChild(this.daysNode);
+
+	};
+
+	//翻页按钮
+	rinyCalendar.prototype.turnBtn=function(){
+
+		var _this=this;
+
+		if(this.options.prevMonthBtn){
+			this.options.prevMonthBtn.addEventListener('click',function(){
+				_this.mFilter();
+				_this.m--;
+				_this.removeDaysElement=_this.daysNode;
+				_this.pageTurn();
+
+				//翻页回调
+				_this.options.prevFn && _this.options.prevFn(_this.removeDaysElement,_this.daysNode,_this.options.daysWrap);
+			},false);
+		};
+
+		if(this.options.nextMonthBtn){
+			this.options.nextMonthBtn.addEventListener('click',function(){
+				_this.mFilter();
+				_this.m++;
+				_this.removeDaysElement=_this.daysNode;
+				_this.pageTurn();
+
+				_this.options.nextFn && _this.options.nextFn(_this.removeDaysElement,_this.daysNode,_this.options.daysWrap);
+			},false);
+		};
+
+	};
+
+	rinyCalendar.prototype.chooseDate=function(){
+
+		this.options.wrap.addEventListener('click',function(e){
+
+			if(e.target.className.split(' ').indexOf('riny_calendar_day')!=-1){
+				console.log(
+					{
+						year:e.target.getAttribute('rinycalendardate').split('-')[0],
+						month:e.target.getAttribute('rinycalendardate').split('-')[1],
+						day:e.target.getAttribute('rinycalendardate').split('-')[2]
+					}
+				);
+			};
+
+			//数据输出可以绑定到this.options.wrap或者用回调函数返回。
+
 		},false);
+
 	};
 
-	if(option.nextMonthBtn){
-		option.nextMonthBtn.addEventListener('click',function(){
-			_this.nextMon();
-			option.nextFn && option.nextFn();
-		},false);
-	};	
-};
+	//暴露
+	obj.rinyCalendar=rinyCalendar;
+
+})(window);

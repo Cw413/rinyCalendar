@@ -10,102 +10,126 @@
 		margin:0;
 		padding:0;
 	}
-	i{
-		font-style:normal;
-	}
-	.calendar{
-		font-size:0;
-		word-break:break-all;
-	}
-	.calendar i{
-		display:inline-block;
-		text-align:center;
-		width:14%;
-		font-size:14px;
-		line-height:50px;
-	}
-	.year_and_month span{
-		display:inline-block;
-		width:50%;
-		text-align:center;
-	}
-	.year_and_month i{
-		display:inline;
-	}
-	.rinyCalendar_today{
-		display:block;
-		background-color:cornflowerblue;
-		color:#fff;
-	}
-	.btns{
+	/*垂直日历样式*/
+	/*.wrap{
 		font-size:0;
 	}
-	.btn{
+	span{
 		display:inline-block;
-		width:50%;
 		font-size:14px;
+		vertical-align:top;
 		text-align:center;
-		line-height:50px;
-		height:50px;
 	}
-	.rinyCalendar_oldday{
+	.riny_calendar_year,.riny_calendar_month{
+		width:50%;
+	}
+	.riny_calendar_week>span,.riny_calendar_days>span{
+		width:14.28%;
+	}
+	.riny_calendar_days{
+		border:1px solid cornflowerblue;
+		box-sizing:border-box;
+	}
+	.riny_calendar_oldday,.riny_calendar_blank{
 		color:#ccc;
+	}
+	.riny_calendar_weekend{
+		color:red;
+	}*/
+
+	/*水平日历样式*/
+	.wrap{
+		font-size:0;
+		text-align:center;
+	}
+	span{
+		display:inline-block;
+		font-size:14px;
+		vertical-align:top;
+		text-align:center;
+	}
+	.days{
+		height:300px;
+	}
+	.riny_calendar_year,.riny_calendar_month,.prevbtn,.nextbtn{
+
+	}
+	.riny_calendar_week>span,.riny_calendar_days>span{
+		width:14.28%;
+	}
+	.riny_calendar_oldday,.riny_calendar_blank{
+		color:#ccc;
+	}
+	.riny_calendar_days{
+		border:1px solid cornflowerblue;
+		box-sizing:border-box;
+	}
+	.riny_calendar_weekend{
+		color:red;
+	}
+	.y_m_w{
+		position:relative;
+	}
+	.prevbtn,.nextbtn{
+		position:absolute;
+	}
+	.prevbtn{
+		left:10%;
+		text-align:left;
+		width:auto;
+		padding:0 10px;
+	}
+	.nextbtn{
+		right:10%;
+		text-align:right;
+		width:auto;
+		padding:0 10px;
 	}
 	</style>
 </head>
 <body>
-	<div class="calendar">
-		<div class="year_and_month">
-			<span class="year_and_month_wrap">
-				<i class="calendar_year"></i>
-				<i>年</i>
-			</span>
-			<span class="year_and_month_wrap">
-				<i class="calendar_month"></i>
-				<i>月</i>
-			</span>
+	<!-- 垂直日历结构 -->
+	<!-- <div id="wrap"></div> -->
+
+	<!-- 水平日历结构 -->
+	<div class="wrap" id="wrap">
+		<div class="y_m_w" id="y_m_w">
+			<span class="prevbtn">&lt;</span>
+			<span class="nextbtn">&gt;</span>
 		</div>
-		<div class="calendar_week"></div>
-		<div class="calendar_days"></div>
+		<div class="days" id="days"></div>
 	</div>
-	<div class="btns">
-		<div class="prev btn">上个月</div>
-		<div class="next btn">下个月</div>
-	</div>
+
 	<script>
-	function getEl(cla){
-		return document.getElementsByClassName(cla)[0];
-	};
 
-	var yearInner=getEl('calendar_year'),monthInner=getEl('calendar_month'),weeksInner=getEl('calendar_week'),daysInner=getEl('calendar_days'),prevMonthBtn=getEl('prev'),nextMonthBtn=getEl('next');
+	//实例化垂直日历
+	// new rinyCalendar({
+	// 	type:'vertical',
+	// 	wrap:document.getElementById('wrap'),
+	// 	num:3
+	// });
 
+	//实例化水平日历
 	new rinyCalendar({
-		yearInner:yearInner,
-		monthInner:monthInner,
-		weeksInner:weeksInner,
-		weeksTemplate:'<i>weeksTemplate</i>',
-		daysInner:daysInner,
-		daysTemplate:'<i class="dd">daysTemplate</i>',
-		prevMonthBtn:prevMonthBtn,
-		nextMonthBtn:nextMonthBtn,
-		prevFn:ac,
-		nextFn:ac
+		type:'horizontal',
+		wrap:document.getElementById('wrap'),
+		YMWWrap:document.getElementById('y_m_w'),
+		daysWrap:document.getElementById('days'),
+		prevMonthBtn:document.getElementsByClassName('prevbtn')[0],
+		nextMonthBtn:document.getElementsByClassName('nextbtn')[0],
+		nextFn:function(nowOne,newOne,wrap){
+			change(nowOne,newOne,wrap);
+			
+		},
+		prevFn:function(nowOne,newOne,wrap){
+			change(nowOne,newOne,wrap);
+		}
 	});
 
-	var dd=document.getElementsByClassName('dd');
-	var we=document.getElementsByClassName('rinyCalendar_week');
-	function ac(){
-		for(var i=0;i<dd.length;i++){
-			if(i%7==6 || i%7==5){
-				dd[i].style.color='red';
-				if(i<=6){
-					we[i].style.color='red';
-				};
-				
-			};
-		};
+	function change(nowOne,newOne,wrap){
+		wrap.removeChild(nowOne);
 	};
-	ac();
+
 	</script>
 </body>
 </html>
